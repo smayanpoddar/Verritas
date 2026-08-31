@@ -297,15 +297,35 @@ function Technology() {
     // (which need a fresh byte-range request) far slower than forward ones —
     // the sofa "explodes" fine scrolling down but stalls/won't reassemble
     // scrolling back up. Loading the whole (small, ~2MB) clip into memory
-    // once means every seek, either direction, is instant.
-    fetch("/explode.webm")
-      .then((res) => res.blob())
-      .then((blob) => {
-        if (cancelled) return;
-        objectUrl = URL.createObjectURL(blob);
-        video.src = objectUrl;
-      })
-      .catch(() => {});
+    // once means every seek, either direction, is instant. Only start that
+    // 2MB download once this section is actually getting close, instead of
+    // competing with everything above it for bandwidth on initial load.
+    const loadBlob = () => {
+      fetch("/explode.webm")
+        .then((res) => res.blob())
+        .then((blob) => {
+          if (cancelled) return;
+          objectUrl = URL.createObjectURL(blob);
+          video.src = objectUrl;
+        })
+        .catch(() => {});
+    };
+    const container = containerRef.current;
+    let observer: IntersectionObserver | null = null;
+    if (container) {
+      observer = new IntersectionObserver(
+        (entries) => {
+          if (entries.some((e) => e.isIntersecting)) {
+            loadBlob();
+            observer?.disconnect();
+          }
+        },
+        { rootMargin: "800px" }
+      );
+      observer.observe(container);
+    } else {
+      loadBlob();
+    }
 
     const measure = () => {
       const container = containerRef.current;
@@ -353,6 +373,7 @@ function Technology() {
     kick();
     return () => {
       cancelled = true;
+      observer?.disconnect();
       window.removeEventListener("scroll", kick);
       window.removeEventListener("resize", kick);
       if (raf) cancelAnimationFrame(raf);
@@ -413,18 +434,22 @@ function Hero() {
     const video = heroVideoRef.current;
     if (!video) return;
     // This 9MB background loop was fetching immediately on page load,
-    // competing with fonts/JS for bandwidth during first paint and slowing
-    // the whole site down. Deferring its load to just after first paint
-    // keeps it out of that critical path — the hero still looks right
-    // (navy background) for the brief moment before it starts.
-    let raf = requestAnimationFrame(() => {
-      raf = requestAnimationFrame(() => {
-        video.src = "/sofa-anatomy.mp4";
-        video.load();
-        video.play().catch(() => {});
-      });
-    });
-    return () => cancelAnimationFrame(raf);
+    // competing with fonts, JS, and every other image for bandwidth and
+    // slowing the whole site down. Waiting for the window "load" event
+    // means it only starts once everything else the page actually needs
+    // has already arrived — the hero looks right (navy background) for
+    // that brief window regardless.
+    const start = () => {
+      video.src = "/sofa-anatomy.mp4";
+      video.load();
+      video.play().catch(() => {});
+    };
+    if (document.readyState === "complete") {
+      start();
+      return;
+    }
+    window.addEventListener("load", start, { once: true });
+    return () => window.removeEventListener("load", start);
   }, []);
 
   const container: Variants = {
