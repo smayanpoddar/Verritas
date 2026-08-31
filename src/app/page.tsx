@@ -253,7 +253,9 @@ function ProductionCounter() {
 
   return (
     <span className="flex items-baseline gap-3 whitespace-nowrap">
-      <motion.span className="text-4xl font-black tracking-[-0.02em] text-white tabular-nums sm:text-5xl">
+      <motion.span
+        className="inline-block min-w-[4ch] text-right text-4xl font-black tracking-[-0.02em] text-white tabular-nums sm:text-5xl"
+      >
         {rounded}
       </motion.span>
       <span className="text-[11px] font-semibold tracking-[0.25em] text-white/50">
