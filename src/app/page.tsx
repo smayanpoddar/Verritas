@@ -290,6 +290,22 @@ function Technology() {
 
     let raf = 0;
     let target = 0;
+    let cancelled = false;
+    let objectUrl = "";
+
+    // Scrubbing currentTime against the network source makes backward seeks
+    // (which need a fresh byte-range request) far slower than forward ones —
+    // the sofa "explodes" fine scrolling down but stalls/won't reassemble
+    // scrolling back up. Loading the whole (small, ~2MB) clip into memory
+    // once means every seek, either direction, is instant.
+    fetch("/explode.webm")
+      .then((res) => res.blob())
+      .then((blob) => {
+        if (cancelled) return;
+        objectUrl = URL.createObjectURL(blob);
+        video.src = objectUrl;
+      })
+      .catch(() => {});
 
     const measure = () => {
       const container = containerRef.current;
@@ -301,6 +317,12 @@ function Technology() {
       return rect.bottom < 0 || rect.top > window.innerHeight ? 1 : 0;
     };
 
+    // The last stretch of the clip spreads the parts out further than we
+    // want to show (springs fan out, an extra base layer appears) — cap
+    // playback so scrolling through the rest of the section just holds on
+    // this frame instead of continuing to explode further.
+    const EXPLODE_CAP = 0.62;
+
     // Self-correcting loop: only issue a new seek when the decoder is idle
     // (native video.seeking === false), so seeks are never flooded.
     const tick = () => {
@@ -308,12 +330,13 @@ function Technology() {
       const duration =
         durationRef.current ||
         (Number.isFinite(video.duration) ? video.duration : 0);
+      const capped = Math.min(target, EXPLODE_CAP);
 
       if (duration && !video.seeking) {
-        const t = target * duration;
+        const t = capped * duration;
         if (Math.abs(video.currentTime - t) > 0.02) video.currentTime = t;
       }
-      const scale = SCALE_START + (SCALE_END - SCALE_START) * target;
+      const scale = SCALE_START + (SCALE_END - SCALE_START) * capped;
       video.style.transform = `translateY(-2%) scale(${scale.toFixed(3)})`;
       if (overlayRef.current) {
         overlayRef.current.style.opacity = String(Math.max(0, 1 - target / 0.18));
@@ -329,9 +352,11 @@ function Technology() {
     window.addEventListener("resize", kick);
     kick();
     return () => {
+      cancelled = true;
       window.removeEventListener("scroll", kick);
       window.removeEventListener("resize", kick);
       if (raf) cancelAnimationFrame(raf);
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
   }, [reduceMotion]);
 
