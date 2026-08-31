@@ -372,7 +372,10 @@ function Technology() {
           ref={videoRef}
           muted
           playsInline
-          preload="auto"
+          // Non-reduced-motion loads this as a blob in JS (see effect above)
+          // for instant bidirectional scrubbing — preloading it natively too
+          // via this attribute would double the download.
+          preload={reduceMotion ? "auto" : "none"}
           className="h-full w-full origin-center object-contain will-change-transform"
           aria-hidden
           onLoadedMetadata={(e) => {
@@ -404,6 +407,25 @@ function Technology() {
 
 function Hero() {
   const reduceMotion = useReducedMotion();
+  const heroVideoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const video = heroVideoRef.current;
+    if (!video) return;
+    // This 9MB background loop was fetching immediately on page load,
+    // competing with fonts/JS for bandwidth during first paint and slowing
+    // the whole site down. Deferring its load to just after first paint
+    // keeps it out of that critical path — the hero still looks right
+    // (navy background) for the brief moment before it starts.
+    let raf = requestAnimationFrame(() => {
+      raf = requestAnimationFrame(() => {
+        video.src = "/sofa-anatomy.mp4";
+        video.load();
+        video.play().catch(() => {});
+      });
+    });
+    return () => cancelAnimationFrame(raf);
+  }, []);
 
   const container: Variants = {
     hidden: {},
@@ -424,15 +446,14 @@ function Hero() {
       className="relative flex h-svh w-full flex-col justify-center overflow-hidden bg-[var(--color-ink)]"
     >
       <video
-        autoPlay
+        ref={heroVideoRef}
         muted
         loop
         playsInline
+        preload="none"
         className="absolute inset-0 h-full w-full object-cover opacity-35"
         aria-hidden
-      >
-        <source src="/sofa-anatomy.mp4" type="video/mp4" />
-      </video>
+      />
       <div
         aria-hidden
         className="absolute inset-0 bg-gradient-to-t from-[var(--color-ink)] via-transparent to-[var(--color-ink)]/60"
