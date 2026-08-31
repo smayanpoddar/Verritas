@@ -304,6 +304,11 @@ function Technology() {
         if (cancelled) return;
         objectUrl = URL.createObjectURL(blob);
         video.src = objectUrl;
+        // Safari (unlike Chrome) doesn't reliably pick up a src change on
+        // a preload="none" element without an explicit load() call — the
+        // video was silently never getting metadata/duration there. This
+        // reads from the in-memory blob, so it's free (no network fetch).
+        video.load();
       })
       .catch(() => {});
 
