@@ -38,7 +38,13 @@ export function SmoothScroll() {
       const el = document.querySelector(id);
       if (!el) return;
       e.preventDefault();
-      lenis.scrollTo(el as HTMLElement, { offset: -10 });
+      try {
+        lenis.scrollTo(el as HTMLElement, { offset: -10 });
+      } catch {
+        // Lenis edge case (e.g. dimensions not yet measured) — still move
+        // the page rather than silently doing nothing.
+        (el as HTMLElement).scrollIntoView({ behavior: "smooth" });
+      }
     };
     document.addEventListener("click", onClick);
 
@@ -296,7 +302,7 @@ export function Kinetic({
   }, []);
 
   return (
-    <h2 ref={ref} className={className}>
+    <h2 ref={ref} className={`break-words ${className}`}>
       {words.map((w, i) => (
         <span key={`${w}-${i}`} className="inline-block overflow-hidden py-[0.06em] align-bottom">
           <span

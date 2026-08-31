@@ -122,7 +122,7 @@ export default function CovelliPage() {
 
         <motion.div variants={item} className="mt-14">
           <a
-            href="mailto:covelli@verritas.in"
+            href="mailto:bhanu@verritas.in"
             className="group relative inline-flex cursor-pointer items-center justify-center overflow-hidden border px-10 py-4 text-[11px] tracking-[0.3em] transition-colors duration-300"
             style={{ borderColor: GOLD, color: GOLD, fontFamily: "var(--font-inter-c), sans-serif" }}
           >

@@ -9,7 +9,7 @@ const archivo = Archivo({
 });
 
 export const metadata: Metadata = {
-  title: "VERRITAS — Built From the Bones Up",
+  title: "Verritas - Eastern India's #1 Sofa Manufacturer",
   description:
     "Verritas manufactures every frame, spring and seam in-house — and shows you all of it. Furniture with nothing to hide.",
 };

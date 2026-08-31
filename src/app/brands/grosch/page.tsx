@@ -135,7 +135,7 @@ export default function GroschPage() {
 
         <motion.div variants={item} className="mt-12">
           <a
-            href="mailto:grosch@verritas.in"
+            href="mailto:bhanu@verritas.in"
             className="inline-flex cursor-pointer items-center gap-3 bg-[#22C55E] px-8 py-4 text-[11px] font-bold tracking-[0.25em] text-[#0F172A] transition-colors duration-200 hover:bg-[#16A34A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#22C55E]"
           >
             ENQUIRE — TRADE &amp; CONTRACT →

@@ -4,7 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Cursor, Kinetic, ScrollRail, SmoothScroll } from "./motion";
+import { ChevronDown, Menu, X } from "lucide-react";
 import {
+  AnimatePresence,
   animate,
   motion,
   useInView,
@@ -134,42 +136,100 @@ const STATS = [
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
+const NAV_LINKS: [string, string][] = [
+  ["TECHNOLOGY", "#technology"],
+  ["PROCESS", "#process"],
+  ["BRANDS", "#group"],
+  ["BECOME OUR DEALER", "#dealer"],
+  ["CONTACT", "#contact"],
+];
+
 function Navbar() {
   const reduceMotion = useReducedMotion();
+  const [open, setOpen] = useState(false);
+
+  // lock body scroll while the mobile menu is open
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
+
   return (
-    <motion.nav
-      initial={{ y: reduceMotion ? 0 : -64, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.8, ease: EASE, delay: 0.4 }}
-      className="fixed inset-x-0 top-0 z-50 flex items-center justify-between bg-[var(--color-brand)] px-5 py-3 sm:px-10"
-    >
-      <a href="#top" className="cursor-pointer">
-        <Image
-          src="/logo.png"
-          alt="Verritas"
-          width={150}
-          height={50}
-          preload
-          className="h-9 w-auto sm:h-10"
-        />
-      </a>
-      <div className="hidden items-center gap-8 sm:flex">
-        {[
-          ["TECHNOLOGY", "#technology"],
-          ["PROCESS", "#process"],
-          ["BRANDS", "#group"],
-          ["CONTACT", "#contact"],
-        ].map(([label, href]) => (
-          <a
-            key={label}
-            href={href}
-            className="cursor-pointer text-[11px] font-semibold tracking-[0.25em] text-white/60 transition-colors duration-200 hover:text-white"
+    <>
+      <motion.nav
+        initial={{ y: reduceMotion ? 0 : -64, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.8, ease: EASE, delay: 0.4 }}
+        className="fixed inset-x-0 top-0 z-50 flex items-center justify-between bg-[var(--color-brand)] px-5 py-3 sm:px-10"
+      >
+        <a href="#top" className="cursor-pointer" onClick={() => setOpen(false)}>
+          <Image
+            src="/logo.png"
+            alt="Verritas"
+            width={150}
+            height={50}
+            preload
+            className="h-9 w-auto sm:h-10"
+          />
+        </a>
+
+        <div className="hidden items-center gap-8 sm:flex">
+          {NAV_LINKS.map(([label, href]) => (
+            <a
+              key={label}
+              href={href}
+              className="cursor-pointer text-[11px] font-semibold tracking-[0.25em] text-white/60 transition-colors duration-200 hover:text-white"
+            >
+              {label}
+            </a>
+          ))}
+        </div>
+
+        <button
+          type="button"
+          aria-label={open ? "Close menu" : "Open menu"}
+          aria-expanded={open}
+          onClick={() => setOpen((v) => !v)}
+          className="cursor-pointer text-white sm:hidden"
+        >
+          {open ? <X size={24} /> : <Menu size={24} />}
+        </button>
+      </motion.nav>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: reduceMotion ? 0 : 0.3, ease: EASE }}
+            className="fixed inset-0 z-40 flex flex-col justify-center gap-2 bg-[var(--color-ink)] px-8 sm:hidden"
           >
-            {label}
-          </a>
-        ))}
-      </div>
-    </motion.nav>
+            {NAV_LINKS.map(([label, href], i) => (
+              <motion.a
+                key={label}
+                href={href}
+                onClick={() => setOpen(false)}
+                initial={{ opacity: 0, y: reduceMotion ? 0 : 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: 0.5,
+                  ease: EASE,
+                  delay: reduceMotion ? 0 : 0.08 + i * 0.06,
+                }}
+                className="cursor-pointer border-b border-white/10 py-4 text-[28px] font-black tracking-[-0.01em] text-white"
+              >
+                {label}
+              </motion.a>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
 
@@ -363,35 +423,35 @@ function Hero() {
           variants={fade}
           className="mb-5 text-[11px] font-semibold tracking-[0.35em] text-white/50 sm:text-xs"
         >
-          FURNITURE MANUFACTURING — EST. WITH NOTHING TO HIDE
+          SOFA MANUFACTURING — EASTERN INDIA
         </motion.p>
-        <h1 className="text-[clamp(3rem,11vw,9.5rem)] font-black leading-[0.92] tracking-[-0.03em] text-white">
+        <h1 className="break-words text-[clamp(2.25rem,8vw,8.5rem)] font-black leading-[0.92] tracking-[-0.03em] text-white">
           <span className="block overflow-hidden">
             <motion.span variants={line} className="block">
-              EASTERN INDIA
+              EASTERN INDIA&apos;S #1
             </motion.span>
           </span>
           <span className="block overflow-hidden">
             <motion.span variants={line} className="block">
-              SITS ON VERRITAS.
+              SOFA MANUFACTURER
             </motion.span>
           </span>
         </h1>
-        <motion.div
+        <motion.a
           variants={fade}
-          className="mt-8 flex flex-wrap items-center gap-6"
+          href="#technology"
+          className="group mt-10 inline-flex cursor-pointer items-center gap-3 text-white/60 transition-colors duration-200 hover:text-white"
         >
-          <a
-            href="#process"
-            className="cursor-pointer bg-white px-7 py-4 text-[11px] font-semibold tracking-[0.25em] text-[var(--color-ink)] transition-colors duration-200 hover:bg-[var(--color-accent)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-accent)]"
+          <span className="text-[11px] font-semibold tracking-[0.35em]">
+            SCROLL TO DISCOVER
+          </span>
+          <motion.span
+            animate={reduceMotion ? {} : { y: [0, 5, 0] }}
+            transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
           >
-            SEE THE PROCESS ↓
-          </a>
-          <p className="max-w-sm text-[16px] leading-relaxed text-white/70">
-            We manufacture every frame, spring and seam ourselves — and we show
-            you all of it.
-          </p>
-        </motion.div>
+            <ChevronDown size={16} />
+          </motion.span>
+        </motion.a>
       </motion.div>
 
       <div className="absolute inset-x-0 bottom-0 z-10 overflow-hidden bg-[var(--color-ink)] py-4">
@@ -761,7 +821,7 @@ function Stats() {
       className="bg-[var(--color-brand)] px-5 py-24 sm:px-10 sm:py-32"
     >
       <p className="text-[11px] font-semibold tracking-[0.35em] text-white/50">
-        PROOF, NOT PROMISES
+        BY THE NUMBERS
       </p>
       <div className="mt-10 grid gap-12 sm:grid-cols-3">
         {STATS.map((stat) => (
@@ -781,6 +841,184 @@ function Stats() {
   );
 }
 
+function DealerForm() {
+  const ref = useRef<HTMLElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-20% 0px" });
+  const reduceMotion = useReducedMotion();
+  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">(
+    "idle"
+  );
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const fd = new FormData(form);
+    const name = fd.get("name") as string;
+    const company = fd.get("company") as string;
+    const city = fd.get("city") as string;
+    const phone = fd.get("phone") as string;
+    const email = fd.get("email") as string;
+    const message = fd.get("message") as string;
+
+    setStatus("sending");
+
+    try {
+      const res = await fetch("/api/enquiry", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          kind: "dealer",
+          name,
+          company,
+          city,
+          phone,
+          email,
+          message,
+        }),
+      });
+      if (!res.ok) throw new Error("request failed");
+      setStatus("sent");
+      form.reset();
+    } catch {
+      // Backend not reachable/configured — fall back to opening the
+      // visitor's own mail client with everything pre-filled, so the
+      // enquiry is never simply lost.
+      const subject = `Dealer Enquiry — ${company}`;
+      const body = [
+        `Name: ${name}`,
+        `Company / Firm: ${company}`,
+        `City: ${city}`,
+        `Phone: ${phone}`,
+        email ? `Email: ${email}` : null,
+        message ? `\nMessage:\n${message}` : null,
+      ]
+        .filter(Boolean)
+        .join("\n");
+      window.location.href = `mailto:smayanpoddar@gmail.com,shreevar@verritas.in,bhanu@verritas.in?subject=${encodeURIComponent(
+        subject
+      )}&body=${encodeURIComponent(body)}`;
+      setStatus("error");
+    }
+  };
+
+  const inputClass =
+    "w-full border-b border-[var(--color-ink)]/20 bg-transparent py-3 text-[16px] text-[var(--color-ink)] placeholder:text-[var(--color-ink-muted)] outline-none transition-colors duration-200 focus:border-[var(--color-brand)] disabled:opacity-50";
+
+  return (
+    <section
+      id="dealer"
+      ref={ref}
+      className="bg-[var(--color-paper)] px-5 py-24 sm:px-10 sm:py-32"
+    >
+      <motion.div
+        initial={{ opacity: 0, y: reduceMotion ? 0 : 32 }}
+        animate={inView ? { opacity: 1, y: 0 } : {}}
+        transition={{ duration: 0.8, ease: EASE }}
+        className="mx-auto max-w-3xl"
+      >
+        <p className="text-[11px] font-semibold tracking-[0.35em] text-[var(--color-ink-muted)]">
+          TRADE & PARTNERSHIPS
+        </p>
+        <Kinetic
+          text="BECOME OUR DEALER."
+          className="mt-4 text-[clamp(2.2rem,6vw,4.5rem)] font-black leading-[0.95] tracking-[-0.02em] text-[var(--color-ink)]"
+        />
+        <p className="mt-6 max-w-md text-[16px] leading-relaxed text-[var(--color-ink-muted)]">
+          Join our network of 250+ dealers across Eastern India. Tell us
+          about your business and our team will get back to you.
+        </p>
+
+        {status === "sent" ? (
+          <motion.div
+            initial={{ opacity: 0, y: reduceMotion ? 0 : 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: EASE }}
+            className="mt-12 border-l-2 border-[var(--color-brand)] bg-white/60 px-6 py-5"
+          >
+            <p className="text-[15px] font-semibold text-[var(--color-ink)]">
+              Thanks — your enquiry is in.
+            </p>
+            <p className="mt-1 text-[14px] text-[var(--color-ink-muted)]">
+              Our team will get back to you shortly.
+            </p>
+          </motion.div>
+        ) : (
+          <motion.form
+            onSubmit={handleSubmit}
+            initial={{ opacity: 0, y: reduceMotion ? 0 : 24 }}
+            animate={inView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.8, ease: EASE, delay: 0.15 }}
+            className="mt-12 grid gap-x-8 gap-y-6 sm:grid-cols-2"
+          >
+            <input
+              name="name"
+              type="text"
+              required
+              disabled={status === "sending"}
+              placeholder="Full name"
+              className={inputClass}
+            />
+            <input
+              name="company"
+              type="text"
+              required
+              disabled={status === "sending"}
+              placeholder="Company / firm name"
+              className={inputClass}
+            />
+            <input
+              name="city"
+              type="text"
+              required
+              disabled={status === "sending"}
+              placeholder="City"
+              className={inputClass}
+            />
+            <input
+              name="phone"
+              type="tel"
+              required
+              disabled={status === "sending"}
+              placeholder="Phone / WhatsApp"
+              className={inputClass}
+            />
+            <input
+              name="email"
+              type="email"
+              disabled={status === "sending"}
+              placeholder="Email (optional)"
+              className={`${inputClass} sm:col-span-2`}
+            />
+            <textarea
+              name="message"
+              rows={3}
+              disabled={status === "sending"}
+              placeholder="Tell us about your business (optional)"
+              className={`${inputClass} resize-none sm:col-span-2`}
+            />
+
+            <div className="sm:col-span-2">
+              <button
+                type="submit"
+                disabled={status === "sending"}
+                className="cursor-pointer bg-[var(--color-ink)] px-8 py-4 text-[11px] font-semibold tracking-[0.25em] text-white transition-colors duration-200 hover:bg-[var(--color-brand)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-brand)] disabled:cursor-not-allowed disabled:opacity-60 sm:w-fit"
+              >
+                {status === "sending" ? "SENDING…" : "SUBMIT ENQUIRY"}
+              </button>
+              {status === "error" && (
+                <p className="mt-3 text-[13px] text-[var(--color-ink-muted)]">
+                  Couldn&apos;t reach our server, so we&apos;ve opened your
+                  email app instead — just hit send.
+                </p>
+              )}
+            </div>
+          </motion.form>
+        )}
+      </motion.div>
+    </section>
+  );
+}
+
 function Closing() {
   const ref = useRef<HTMLElement>(null);
   const inView = useInView(ref, { once: true, margin: "-25% 0px" });
@@ -794,8 +1032,8 @@ function Closing() {
     >
       <div>
         <Kinetic
-          text="NOTHING TO HIDE."
-          className="max-w-[9ch] text-[clamp(3rem,12vw,10rem)] font-black leading-[0.92] tracking-[-0.03em] text-white"
+          text="BUILT TO LAST."
+          className="text-[clamp(2.25rem,8vw,8.5rem)] font-black leading-[0.92] tracking-[-0.03em] text-white"
         />
         <motion.div
           initial={{ opacity: 0, y: reduceMotion ? 0 : 24 }}
@@ -804,15 +1042,21 @@ function Closing() {
           className="mt-10 flex flex-wrap items-center gap-6"
         >
           <a
-            href="mailto:hello@verritas.com"
+            href="mailto:bhanu@verritas.in"
             className="cursor-pointer bg-white px-8 py-4 text-[11px] font-semibold tracking-[0.25em] text-[var(--color-ink)] transition-colors duration-200 hover:bg-[var(--color-accent)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-accent)]"
           >
-            TALK TO US
+            ENQUIRE NOW
           </a>
-          <p className="max-w-sm text-[16px] leading-relaxed text-white/70">
-            Visit the workshop, open up a frame, count the staples yourself.
-          </p>
+          <a
+            href="tel:+919836124365"
+            className="cursor-pointer text-[16px] font-semibold text-white transition-colors duration-200 hover:text-[var(--color-accent)]"
+          >
+            +91 98361 24365
+          </a>
         </motion.div>
+        <p className="mt-4 max-w-sm text-[16px] leading-relaxed text-white/70">
+          Get in touch to explore our range or start a partnership.
+        </p>
       </div>
 
       <footer className="mt-24 flex flex-wrap items-center justify-between gap-4 border-t border-white/10 py-8">
@@ -848,6 +1092,7 @@ export default function Home() {
       <Brands />
       <Anatomy />
       <Stats />
+      <DealerForm />
       <Closing />
     </main>
   );
