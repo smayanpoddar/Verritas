@@ -297,35 +297,15 @@ function Technology() {
     // (which need a fresh byte-range request) far slower than forward ones —
     // the sofa "explodes" fine scrolling down but stalls/won't reassemble
     // scrolling back up. Loading the whole (small, ~2MB) clip into memory
-    // once means every seek, either direction, is instant. Only start that
-    // 2MB download once this section is actually getting close, instead of
-    // competing with everything above it for bandwidth on initial load.
-    const loadBlob = () => {
-      fetch("/explode.webm")
-        .then((res) => res.blob())
-        .then((blob) => {
-          if (cancelled) return;
-          objectUrl = URL.createObjectURL(blob);
-          video.src = objectUrl;
-        })
-        .catch(() => {});
-    };
-    const container = containerRef.current;
-    let observer: IntersectionObserver | null = null;
-    if (container) {
-      observer = new IntersectionObserver(
-        (entries) => {
-          if (entries.some((e) => e.isIntersecting)) {
-            loadBlob();
-            observer?.disconnect();
-          }
-        },
-        { rootMargin: "800px" }
-      );
-      observer.observe(container);
-    } else {
-      loadBlob();
-    }
+    // once means every seek, either direction, is instant.
+    fetch("/explode.webm")
+      .then((res) => res.blob())
+      .then((blob) => {
+        if (cancelled) return;
+        objectUrl = URL.createObjectURL(blob);
+        video.src = objectUrl;
+      })
+      .catch(() => {});
 
     const measure = () => {
       const container = containerRef.current;
@@ -373,7 +353,6 @@ function Technology() {
     kick();
     return () => {
       cancelled = true;
-      observer?.disconnect();
       window.removeEventListener("scroll", kick);
       window.removeEventListener("resize", kick);
       if (raf) cancelAnimationFrame(raf);
